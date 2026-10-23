@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react'
 
-import { Separator } from '@/components/ui/separator'
-
 import { HistoryBar } from './HistoryBar'
 
 import type { Page, PageStatusResponse, ServiceStatus } from '../types'
@@ -60,7 +58,7 @@ export default function StatusPage({ page, previewData, ssrData }: { page: Page;
 
     return (
         <div className='min-h-svh flex flex-col'>
-            <div className='max-w-2xl mx-auto w-full px-4 py-10 flex-1'>
+            <div className='max-w-2xl mx-auto w-full px-4 pt-10 pb-4 flex-1'>
                 <div className='flex items-center justify-between mb-8 gap-6'>
                     <div className='flex items-center gap-3 min-w-fit'>
                         {page.iconUrl && (
@@ -98,13 +96,9 @@ export default function StatusPage({ page, previewData, ssrData }: { page: Page;
             </div>
 
             {page.footerText && (
-                <>
-                    <Separator />
-
-                    <footer className='text-center text-xs text-muted-foreground py-4'>
-                        {page.footerText}
-                    </footer>
-                </>
+                <footer className='text-center text-xs text-muted-foreground pb-12'>
+                    {page.footerText}
+                </footer>
             )}
         </div>
     )
