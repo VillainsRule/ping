@@ -10,6 +10,7 @@ function formatDuration(ms: number) {
     const m = Math.round(s / 60)
     if (m < 60) return `${m}m`
     const h = (s / 3600).toFixed(1)
+    if (h.endsWith('.0')) return `${h.slice(0, -2)}h`
     return `${h}h`
 }
 
