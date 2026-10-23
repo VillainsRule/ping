@@ -327,22 +327,24 @@ func HandlePublicStatus(w http.ResponseWriter, r *http.Request) {
 	util.JSONResp(w, BuildPageStatus(page))
 }
 
-type IncidentSummary struct {
-	Start      int64 `json:"start"`
-	End        int64 `json:"end"`
-	StatusCode int   `json:"statusCode"`
-}
-
 type DayHistory struct {
-	Date      string            `json:"date"`
-	Up        bool              `json:"up"`
-	Incidents []IncidentSummary `json:"incidents"`
+	Date            string `json:"date"`
+	Up              bool   `json:"up"`
+	DowntimeMs      int64  `json:"downtimeMs"`
+	WasDownFullTime bool   `json:"wasDownFullTime"`
 }
 
 type HourHistory struct {
-	HourStart int64             `json:"hourStart"`
-	Up        bool              `json:"up"`
-	Incidents []IncidentSummary `json:"incidents"`
+	HourStart       int64 `json:"hourStart"`
+	Up              bool  `json:"up"`
+	DowntimeMs      int64 `json:"downtimeMs"`
+	WasDownFullTime bool  `json:"wasDownFullTime"`
+}
+
+func summarizeDowntime(total, bucketStart, bucketEnd int64) (int64, bool) {
+	elapsed := max64(0, bucketEnd-bucketStart)
+	total = min64(total, elapsed)
+	return total, elapsed > 0 && total >= elapsed-time.Minute.Milliseconds()
 }
 
 type ServiceStatus struct {
@@ -447,10 +449,10 @@ func buildDay30(incs []db.Incident, now time.Time, nowMs int64) []DayHistory {
 		}
 
 		dh := DayHistory{
-			Date:      day.Format("2006-01-02"),
-			Up:        true,
-			Incidents: []IncidentSummary{},
+			Date: day.Format("2006-01-02"),
+			Up:   true,
 		}
+		var downtime int64
 
 		for _, inc := range incs {
 			incEnd := nowMs
@@ -461,13 +463,10 @@ func buildDay30(incs []db.Incident, now time.Time, nowMs int64) []DayHistory {
 				continue
 			}
 			dh.Up = false
-			dh.Incidents = append(dh.Incidents, IncidentSummary{
-				Start:      max64(inc.Start, dayStart),
-				End:        min64(incEnd, dayEnd),
-				StatusCode: inc.StatusCode,
-			})
+			downtime += max64(0, min64(incEnd, dayEnd)-max64(inc.Start, dayStart))
 		}
 
+		dh.DowntimeMs, dh.WasDownFullTime = summarizeDowntime(downtime, dayStart, dayEnd)
 		days[i] = dh
 	}
 	return days
@@ -488,8 +487,8 @@ func buildHour24(incs []db.Incident, now time.Time, nowMs int64) []HourHistory {
 		hh := HourHistory{
 			HourStart: hsMs,
 			Up:        true,
-			Incidents: []IncidentSummary{},
 		}
+		var downtime int64
 
 		for _, inc := range incs {
 			incEnd := nowMs
@@ -500,13 +499,10 @@ func buildHour24(incs []db.Incident, now time.Time, nowMs int64) []HourHistory {
 				continue
 			}
 			hh.Up = false
-			hh.Incidents = append(hh.Incidents, IncidentSummary{
-				Start:      max64(inc.Start, hsMs),
-				End:        min64(incEnd, heMs),
-				StatusCode: inc.StatusCode,
-			})
+			downtime += max64(0, min64(incEnd, heMs)-max64(inc.Start, hsMs))
 		}
 
+		hh.DowntimeMs, hh.WasDownFullTime = summarizeDowntime(downtime, hsMs, heMs)
 		hours[i] = hh
 	}
 	return hours

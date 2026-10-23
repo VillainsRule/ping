@@ -3,8 +3,8 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "dev": "bunx --bun vite build --watch",
-        "build": "bunx --bun vite build"
+        "dev": "TAG=admin bunx --bun vite build --watch",
+        "build": "TAG=admin bunx --bun vite build && TAG=page bunx --bun vite build"
     },
     "dependencies": {
         "@fontsource-variable/geist": "^5.2.9",

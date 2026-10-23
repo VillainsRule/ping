@@ -8,10 +8,9 @@ import { Separator } from '@/components/ui/separator'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
-import StatusPage from './StatusPage'
-import { Hour24Bar } from './HistoryBar'
+import { HistoryBar } from './HistoryBar'
 
-import type { Group, HourHistory, Page, PageStatusResponse, Service } from '../types'
+import type { Group, HourHistory, Page, Service } from '../types'
 
 async function api<T>(method: string, path: string, body?: unknown): Promise<T> {
     const res = await fetch(path, {
@@ -40,11 +39,8 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
     const [search, setSearch] = useState('')
     const [editSvc, setEditSvc] = useState<Partial<Service> | null>(null)
     const [editPage, setEditPage] = useState<Page | null>(null)
-    const [previewPage, setPreviewPage] = useState<Page | null>(null)
-    const [previewData, setPreviewData] = useState<PageStatusResponse | null>(null)
     const [svcDrawerOpen, setSvcDrawerOpen] = useState(false)
     const [pageEditorOpen, setPageEditorOpen] = useState(false)
-    const [previewOpen, setPreviewOpen] = useState(false)
     const [customTagMode, setCustomTagMode] = useState(false)
     const [history, setHistory] = useState<ServiceHistory[]>([])
 
@@ -135,13 +131,6 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
         loadPages()
     }
 
-    const openPreview = async (page: Page) => {
-        setPreviewPage(page)
-        setPreviewOpen(true)
-        const data = await api<PageStatusResponse>('GET', `/api/pages/${page.id}/status`)
-        setPreviewData(data)
-    }
-
     const downCount = services.filter(s => !s.up).length
 
     const filteredServices = services.filter(s =>
@@ -210,7 +199,7 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
                                                     <span className={`inline-block shrink-0 size-2 rounded-full ${svc.up ? 'bg-green-500' : 'bg-red-500'}`} />
                                                     <span className='font-medium text-sm shrink-0'>{svc.name}</span>
                                                     <span className='text-xs text-muted-foreground shrink-0'>{new URL(svc.url).origin}</span>
-                                                    {h && <div className='flex-1 flex justify-end'><div className='w-96'><Hour24Bar hours={h.hour24} createdAt={svc.createdAt} /></div></div>}
+                                                    {h && <div className='flex-1 flex justify-end'><div className='w-96'><HistoryBar history={h.hour24} createdAt={svc.createdAt} className='h-6' /></div></div>}
                                                 </button>
                                             )
                                         })}
@@ -235,7 +224,7 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
                                                     <span className={`inline-block shrink-0 size-2 rounded-full ${svc.up ? 'bg-green-500' : 'bg-red-500'}`} />
                                                     <span className='font-medium text-sm shrink-0'>{svc.name}</span>
                                                     <span className='text-xs text-muted-foreground shrink-0'>{new URL(svc.url).origin}</span>
-                                                    {h && <div className='flex-1 flex justify-end'><div className='w-96'><Hour24Bar hours={h.hour24} createdAt={svc.createdAt} /></div></div>}
+                                                    {h && <div className='flex-1 flex justify-end'><div className='w-96'><HistoryBar history={h.hour24} createdAt={svc.createdAt} /></div></div>}
                                                 </button>
                                             )
                                         })}
@@ -266,7 +255,7 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
                                             <p className='text-xs text-muted-foreground'>{page.hostname}</p>
                                         </div>
                                         <div className='flex gap-2'>
-                                            <Button variant='outline' size='sm' onClick={() => openPreview(page)}>Preview</Button>
+                                            <Button variant='outline' size='sm' onClick={() => window.open(`/status/${page.name}`)}>Preview</Button>
                                             <Button variant='outline' size='sm' onClick={() => window.open(`https://${page.hostname}`)}>Open</Button>
                                             <Button variant='outline' size='sm' onClick={() => openEditPage(page)}>Edit</Button>
                                         </div>
@@ -354,17 +343,6 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
                             onSave={savePage}
                             onDelete={editPage.id ? deletePage : undefined}
                         />
-                    )}
-                </SheetContent>
-            </Sheet>
-
-            <Sheet open={previewOpen} onOpenChange={open => { setPreviewOpen(open); if (!open) { setPreviewPage(null); setPreviewData(null) } }}>
-                <SheetContent className='w-full sm:max-w-2xl overflow-y-auto p-0'>
-                    {previewPage && previewData && (
-                        <StatusPage page={previewPage} previewData={previewData} />
-                    )}
-                    {previewPage && !previewData && (
-                        <div className='flex items-center justify-center h-full text-muted-foreground text-sm'>Loading preview...</div>
                     )}
                 </SheetContent>
             </Sheet>

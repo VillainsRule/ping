@@ -1,10 +1,15 @@
-import { useEffect, useState } from 'react'
+import { createRoot } from 'react-dom/client'
+import { StrictMode, useEffect, useState } from 'react'
 
 import Login from './components/Login'
 import Dashboard from './components/Dashboard'
 import StatusPage from './components/StatusPage'
 
 import type { InitResponse, PageStatusResponse } from './types'
+
+import { TooltipProvider } from '@/components/ui/tooltip'
+
+import './index.css'
 
 declare global {
     interface Window { __SSR__?: PageStatusResponse }
@@ -16,6 +21,8 @@ function getStatusPageName() {
 }
 
 export default function App() {
+    if (window.__SSR__) return <StatusPage page={window.__SSR__.page} ssrData={window.__SSR__} />
+
     const [init, setInit] = useState<InitResponse | null>(null)
     const [namedPageData, setNamedPageData] = useState<PageStatusResponse | null>(null)
 
@@ -34,10 +41,6 @@ export default function App() {
             .then(setNamedPageData)
     }, [statusName, init?.loggedIn])
 
-    if (window.__SSR__) {
-        return <StatusPage page={window.__SSR__.page} ssrData={window.__SSR__} />
-    }
-
     if (!init) return null
 
     if (init.mode === 'statuspage' && init.page) {
@@ -52,3 +55,11 @@ export default function App() {
 
     return null
 }
+
+createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+        <TooltipProvider>
+            <App />
+        </TooltipProvider>
+    </StrictMode>
+)

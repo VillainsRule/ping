@@ -17,15 +17,15 @@ import (
 	"ping/internal/util"
 )
 
-var indexHTML []byte
+var pageHTML []byte
 
 func loadIndexHTML() {
-	data, err := os.ReadFile("../app/dist/index.html")
+	data, err := os.ReadFile("../app/dist/index-page.html")
 	if err != nil {
 		log.Printf("warning: could not read index.html: %v", err)
 		return
 	}
-	indexHTML = data
+	pageHTML = data
 }
 
 func main() {
@@ -74,20 +74,22 @@ func serveSSRStatusPage(w http.ResponseWriter, pageStatus handlers.PageStatusRes
 	ssrData, err := json.Marshal(pageStatus)
 	if err != nil {
 		log.Printf("ssr marshal error: %v", err)
-		w.Write(indexHTML)
+		w.Write(pageHTML)
 		return
 	}
 
 	script := []byte("<script>window.__SSR__=" + string(ssrData) + "</script></head>")
-	out := bytes.Replace(indexHTML, []byte("</head>"), script, 1)
+	out := bytes.Replace(pageHTML, []byte("</head>"), script, 1)
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Write(out)
 }
 
 func serveSPA(w http.ResponseWriter, r *http.Request) {
-	dist := "../app/dist"
+	dist := "../app/dist/"
 	path := r.URL.Path
+	host := util.StripPort(r.Host)
+	page := db.FindPageByHost(host)
 
 	if path != "/" && path != "/index.html" {
 		fp := filepath.Join(dist, filepath.Clean("/"+path))
@@ -97,11 +99,10 @@ func serveSPA(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	host := util.StripPort(r.Host)
-	if page := db.FindPageByHost(host); page != nil && len(indexHTML) > 0 {
+	if page != nil && len(pageHTML) > 0 {
 		serveSSRStatusPage(w, handlers.BuildPageStatus(page))
 		return
 	}
 
-	http.ServeFile(w, r, dist+"/index.html")
+	http.ServeFile(w, r, dist+"/index-admin.html")
 }

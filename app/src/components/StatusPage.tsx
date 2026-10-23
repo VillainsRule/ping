@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 
 import { Separator } from '@/components/ui/separator'
 
-import { Day30Bar } from './HistoryBar'
+import { HistoryBar } from './HistoryBar'
 
 import type { Page, PageStatusResponse, ServiceStatus } from '../types'
 
@@ -22,10 +22,10 @@ function ServiceRow({ svc, services }: { svc: { id: string }, services: ServiceS
                     <span className='font-medium text-sm'>{status.name}</span>
                 </div>
                 <span className='text-xs text-muted-foreground'>
-                    {status.up ? 'Operational' : `Down${status.currentStatusCode ? ` (${status.currentStatusCode})` : ''}`}
+                    {status.up ? 'Working' : `Down${status.currentStatusCode ? ` (${status.currentStatusCode})` : ''}`}
                 </span>
             </div>
-            <Day30Bar days={status.day30} createdAt={status.createdAt} />
+            <HistoryBar history={status.day30} createdAt={status.createdAt} />
             <div className='flex justify-between text-xs text-muted-foreground'>
                 <span>30 days ago</span>
                 <span>Today</span>
@@ -61,21 +61,23 @@ export default function StatusPage({ page, previewData, ssrData }: { page: Page;
     return (
         <div className='min-h-svh flex flex-col'>
             <div className='max-w-2xl mx-auto w-full px-4 py-10 flex-1'>
-                <div className='flex items-center gap-3 mb-6'>
-                    {page.iconUrl && (
-                        <img src={page.iconUrl} alt='' className='size-8 rounded' />
+                <div className='flex items-center justify-between mb-8 gap-6'>
+                    <div className='flex items-center gap-3 min-w-fit'>
+                        {page.iconUrl && (
+                            <img src={page.iconUrl} alt='' className='size-8 rounded' />
+                        )}
+                        <h1 className='text-2xl font-semibold'>{page.title || page.name}</h1>
+                    </div>
+                    {page.description && (
+                        <p className='text-muted-foreground text-sm'>{page.description}</p>
                     )}
-                    <h1 className='text-2xl font-semibold'>{page.title || page.name}</h1>
-                </div>
-                {page.description && (
-                    <p className='text-muted-foreground mb-6 text-sm'>{page.description}</p>
-                )}
 
-                <div className={`rounded-lg px-4 py-3 mb-8 text-sm font-medium ${downCount > 0
-                    ? 'bg-red-500/10 text-red-600 dark:text-red-400'
-                    : 'bg-green-500/10 text-green-700 dark:text-green-400'
-                    }`}>
-                    {downCount > 0 ? `${downCount} service${downCount > 1 ? 's' : ''} down` : 'All systems operational'}
+                    <div className={`rounded-lg w-full py-2 text-sm font-medium text-center ${downCount > 0
+                        ? 'bg-red-500/10 text-red-600 dark:text-red-400'
+                        : 'bg-green-500/10 text-green-700 dark:text-green-400'
+                        }`}>
+                        {downCount > 0 ? `${downCount} service${downCount > 1 ? 's' : ''} down` : 'all systems operational!'}
+                    </div>
                 </div>
 
                 {data && sortedGroups.map(group => (

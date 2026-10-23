@@ -15,16 +15,16 @@ export default defineConfig({
     },
 
     build: {
-        target: 'esnext',
-        rollupOptions: {
+        target: 'es2023',
+        emptyOutDir: false,
+        rolldownOptions: {
+            input: `${path.join(import.meta.dirname, `index-${process.env.TAG}.html`)}`,
             output: {
                 chunkFileNames: 'a/[hash].js',
                 entryFileNames: 'a/[hash].js',
-                assetFileNames: 'a/[hash].[extname]'
+                assetFileNames: 'a/[hash][extname]'
             }
         },
-        watch: {
-            exclude: ['**/dist/**']
-        }
+        watch: process.argv.includes('--watch') ? { exclude: ['**/dist/**'] } : null
     }
 })
